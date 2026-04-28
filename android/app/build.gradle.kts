@@ -1,9 +1,18 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
-
-    // Flutter Gradle Plugin (must come after Android & Kotlin)
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// 🔐 Load keystore properties
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -21,33 +30,33 @@ android {
     }
 
     defaultConfig {
-        // Unique application ID
         applicationId = "com.connectonmap.gitagerman"
-
-        // SDK configurations
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-
-        // Versioning
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
-    buildTypes {
-        release {
-            // ⚠️ Replace with your release signing config before Play Store upload
-            signingConfig = signingConfigs.getByName("debug")
-
-            // Optional optimizations (recommended later)
-            isMinifyEnabled = false
-            isShrinkResources = false
+    // ✅ ADD THIS BLOCK
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
         }
     }
 
-    // Optional: helps avoid duplicate META-INF issues
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+    buildTypes {
+        release {
+            // ❌ remove debug signing
+            // signingConfig = signingConfigs.getByName("debug")
+
+            // ✅ use release signing
+            signingConfig = signingConfigs.getByName("release")
+
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
